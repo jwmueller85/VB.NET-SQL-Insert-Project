@@ -1,0 +1,102 @@
+Public Class Form1
+    Dim SQL As New SQLControl 'assigns SQL to class SQLControl
+
+    ' ERROR CHECK
+    Private Function NotEmpty(val As String) As Boolean
+        If Not String.IsNullOrEmpty(val) Then Return True Else Return False
+    End Function
+
+    Private Sub txtQuery_TextChanged(sender As Object, e As EventArgs) Handles txtQuery.TextChanged
+
+    End Sub
+
+    Private Sub btnQuery_Click(sender As Object, e As EventArgs) Handles btnQuery.Click
+        ' EXECUTE QUERY/COMMAND
+        SQL.ExecQuery(txtQuery.Text)
+
+        ' REPORT & ABORT ON ERRORS
+        If NotEmpty(SQL.Exception) Then MsgBox(SQL.Exception) : Exit Sub
+
+        ' SEND QUERY RESULTS TO DATAGRIDVIEW
+        dgvData.DataSource = SQL.DBDT
+    End Sub
+
+    Private Sub TabPage2_Click(sender As Object, e As EventArgs) Handles TabPage2.Click
+
+    End Sub
+
+    Private Sub btnAddShift_Click(sender As Object, e As EventArgs) Handles btnAddShift.Click
+
+        ' ADD QUERY PARAMS
+        SQL.AddParam("@Name", txtShiftName.Text)
+
+        ' QUERY FOR USER
+        SQL.ExecQuery("SELECT name FROM humanresources.shift WHERE name = @Name ")
+
+        ' REPORT & ABORT IF USER EXISTS
+        If SQL.DBDT.Rows.Count > 0 Then MsgBox("User already exists!") : Exit Sub
+
+        ' CREATE SHIFT
+        CreateShift()
+
+        'CLEAR FIELDS
+        txtShiftName.Clear()
+        nmbStartHr.Value = 0
+        nmbEndHr.Value = 0
+        nmbStartMin.Value = 0
+        nmbEndMin.Value = 0
+
+    End Sub
+
+    Public Sub CreateShift()
+        'Declare values for time
+        Dim zeroes As String = 00
+        Dim StartHrCon As String
+        Dim StartMinCon As String
+        Dim EndHrCon As String
+        Dim EndMinCon As String
+
+        'Add a 0 to the number box if less than 10 to comply with database field type
+        If nmbStartHr.Value < 10 Then StartHrCon = "0" & nmbStartHr.Value.ToString Else StartHrCon = nmbStartHr.Value
+
+        If nmbStartMin.Value < 10 Then StartMinCon = "0" & nmbStartMin.Value.ToString Else StartMinCon = nmbStartMin.Value
+
+        If nmbEndHr.Value < 10 Then EndHrCon = "0" & nmbEndHr.Value.ToString Else EndHrCon = nmbStartHr.Value
+
+        If nmbEndMin.Value < 10 Then EndMinCon = "0" & nmbEndMin.Value.ToString Else EndMinCon = nmbStartMin.Value
+
+
+        Dim starttime As String = StartHrCon & ":" & StartMinCon & ":" & zeroes
+
+        'SET INSERT PARAMETERS
+        SQL.AddParam("@name", txtShiftName.Text)
+        SQL.AddParam("@shiftstart", starttime)
+        SQL.AddParam("@shiftend", nmbEndHr.Value & ":" & nmbEndMin.Value)
+        SQL.AddParam("@moddate", calModDate.MaxDate)
+
+        'EXECUTE INSERT COMMAND
+        SQL.ExecQuery("INSERT INTO HumanResources.shift (name, starttime, endtime, modifieddate) " &
+            "values(@name,@shiftstart,@shiftend,@moddate)")
+
+    End Sub
+
+
+    Private Sub txtShiftName_TextChanged(sender As Object, e As EventArgs) Handles txtShiftName.TextChanged
+
+    End Sub
+
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        Dim zeroes As String = "00"
+        Dim StartHrCon As String
+        Dim StartMinCon As String
+
+
+        If nmbStartHr.Value < 10 Then StartHrCon = "0" & nmbStartHr.Value.ToString Else StartHrCon = nmbStartHr.Value
+
+        If nmbStartMin.Value < 10 Then StartMinCon = "0" & nmbStartMin.Value.ToString Else StartMinCon = nmbStartMin.Value
+
+        Dim starttime As String = StartHrCon & ":" & StartMinCon & ":" & zeroes
+        TextBox1.Text = starttime
+        'TextBox1.Text = calModDate.MaxDate
+    End Sub
+End Class
